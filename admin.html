@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChangarroWEB - Panel Admin</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="admin.css">
+    <script src="admin.js" defer></script>
+</head>
+<body>
+    <!-- LOGIN -->
+    <div id="login-container" class="login-container active">
+        <div class="login-box">
+            <h1>🔐 ChangarroWEB Admin</h1>
+            <p>Acceso Restringido - Solo Vendedores</p>
+            
+            <form onsubmit="iniciarSesion(event)">
+                <div class="form-group">
+                    <label for="usuario">Usuario:</label>
+                    <input type="text" id="usuario" placeholder="admin" required>
+                </div>
+                <div class="form-group">
+                    <label for="contraseña">Contraseña:</label>
+                    <input type="password" id="contraseña" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn-login">Iniciar Sesión</button>
+            </form>
+            <p class="login-info">Usuario: <strong>admin</strong> | Contraseña: <strong>admin123</strong></p>
+        </div>
+    </div>
+
+    <!-- PANEL ADMIN -->
+    <div id="admin-container" class="admin-container">
+        <header class="admin-header">
+            <h1>🎨 ChangarroWEB - Panel de Control</h1>
+            <button class="btn-logout" onclick="cerrarSesion()">🚪 Cerrar Sesión</button>
+        </header>
+
+        <nav class="admin-nav">
+            <button class="nav-btn active" onclick="mostrarSeccion('dashboard')">📊 Dashboard</button>
+            <button class="nav-btn" onclick="mostrarSeccion('productos')">📦 Productos</button>
+            <button class="nav-btn" onclick="mostrarSeccion('ordenes')">🛒 Órdenes Recibidas</button>
+        </nav>
+
+        <!-- DASHBOARD -->
+        <section id="dashboard" class="admin-section active">
+            <h2>📊 Dashboard</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Total de Productos</h3>
+                    <p class="stat-numero" id="total-productos">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Órdenes Recibidas</h3>
+                    <p class="stat-numero" id="total-ordenes">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Ingresos</h3>
+                    <p class="stat-numero" id="total-ingresos">$0.00</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Stock Bajo</h3>
+                    <p class="stat-numero alerta" id="stock-bajo">0</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- GESTIÓN DE PRODUCTOS -->
+        <section id="productos" class="admin-section">
+            <div class="productos-header">
+                <h2>📦 Gestión de Productos</h2>
+                <button class="btn-primario" onclick="mostrarFormularioProducto()">➕ Nuevo Producto</button>
+            </div>
+
+            <!-- Formulario de producto -->
+            <div id="formulario-producto" class="formulario-producto hidden">
+                <h3 id="formulario-titulo">Agregar Nuevo Producto</h3>
+                <form onsubmit="guardarProducto(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="prod-titulo">Título:</label>
+                            <input type="text" id="prod-titulo" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="prod-type">Tipo:</label>
+                            <select id="prod-type" required>
+                                <option value="">Selecciona tipo</option>
+                                <option value="poster">Poster</option>
+                                <option value="postal">Postal</option>
+                                <option value="mini-poster">Mini Poster</option>
+                                <option value="botón">Botón</option>
+                                <option value="sticker">Sticker</option>
+                                <option value="pin">Pin</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="prod-category">Categoría:</label>
+                            <input type="text" id="prod-category" placeholder="ej: anime, memes, arte" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="prod-precio">Precio:</label>
+                            <input type="number" id="prod-precio" min="0" step="0.01" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="prod-stock">Stock:</label>
+                            <input type="number" id="prod-stock" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="prod-imagen">URL de Imagen:</label>
+                            <input type="url" id="prod-imagen" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="prod-descripcion">Descripción:</label>
+                        <textarea id="prod-descripcion" rows="3"></textarea>
+                    </div>
+
+                    <div class="form-acciones">
+                        <button type="submit" class="btn-primario">💾 Guardar Producto</button>
+                        <button type="button" class="btn-secundario" onclick="cancelarFormulario()">❌ Cancelar</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Lista de productos -->
+            <div id="lista-productos" class="lista-productos"></div>
+        </section>
+
+        <!-- ÓRDENES RECIBIDAS -->
+        <section id="ordenes" class="admin-section">
+            <h2>🛒 Órdenes Recibidas</h2>
+            <div id="lista-ordenes" class="lista-ordenes"></div>
+        </section>
+    </div>
+</body>
+</html>

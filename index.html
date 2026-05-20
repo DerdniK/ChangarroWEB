@@ -1,20 +1,96 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ChangarroWEB</title>
+    <title>ChangarroWEB - Catálogo Online</title>
     <link rel="stylesheet" href="style.css">
     <script src="script.js" defer></script>
 </head>
 <body>
-    <div>
-        <h1>ChangarroWEB</h1>
-        <p>Welcome to ChangarroWEB!</p>
+    <header>
+        <h1>🎨 ChangarroWEB</h1>
+        <p>Catálogo Online - Tienda Física & Instagram</p>
+        <div class="header-acciones">
+            <button class="btn-carrito" onclick="abrirCarrito()">
+                🛒 Carrito (<span id="contador-carrito">0</span>)
+            </button>
+            <a href="admin.html" class="btn-admin">🔐 Panel Admin</a>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <button class="btn-cargar" onclick="obtenerProductos()">⬇️ Cargar Catálogo Completo</button>
+
+        <div id="botones-filtro" class="botones-filtro"></div>
+
+        <div id="contenedor-productos">
+            <p class="sin-productos">Presiona el botón para cargar el catálogo de productos</p>
+        </div>
     </div>
 
-    <button onclick="obtenerProductos()">Cargar Productos</button>
+    <!-- Modal de producto -->
+    <div id="modal-producto" class="modal-overlay">
+        <div class="modal-contenido">
+            <button class="modal-cerrar" onclick="cerrarModal()">✕</button>
+            <div class="modal-grid">
+                <div class="modal-imagen-container">
+                    <img id="modal-imagen" src="" alt="Producto" class="modal-imagen">
+                </div>
+                <div class="modal-info">
+                    <h2 id="modal-titulo"></h2>
+                    <p id="modal-categoria"></p>
+                    <div id="modal-tipo"></div>
+                    <div class="modal-precio-section">
+                        <span class="modal-precio" id="modal-precio"></span>
+                    </div>
+                    <p id="modal-stock" class="modal-stock"></p>
+                    <p id="modal-descripcion" class="modal-descripcion"></p>
+                    <div class="modal-cantidad">
+                        <label for="cantidad">Cantidad:</label>
+                        <input type="number" id="cantidad" min="1" value="1">
+                    </div>
+                    <button class="btn-comprar" onclick="agregarAlCarrito()">🛒 Agregar al Carrito</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <div id="contenedor-productos"></div>
+    <!-- Modal de carrito -->
+    <div id="modal-carrito" class="modal-overlay">
+        <div class="modal-carrito-contenido">
+            <button class="modal-cerrar" onclick="cerrarCarrito()">✕</button>
+            <h2>🛒 Tu Carrito de Compras</h2>
+            
+            <div id="carrito-items" class="carrito-items"></div>
+            
+            <div id="carrito-vacio" class="carrito-vacio">
+                <p>Tu carrito está vacío 😢</p>
+            </div>
+            
+            <div id="carrito-resumen" class="carrito-resumen hidden">
+                <div class="resumen-total">
+                    <p>Subtotal: <span id="subtotal">$0.00</span></p>
+                    <p class="total-final">Total: <span id="total-carrito">$0.00</span></p>
+                </div>
+                
+                <form id="formulario-orden" onsubmit="procesarOrden(event)" class="formulario-orden">
+                    <h3>Información de Envío</h3>
+                    <div class="form-order">
+                        <input type="text" id="cliente-nombre" placeholder="Tu nombre completo" required>
+                        <input type="email" id="cliente-email" placeholder="Tu correo electrónico" required>
+                        <input type="tel" id="cliente-telefono" placeholder="Tu teléfono" required>
+                        <textarea id="cliente-direccion" placeholder="Dirección de envío (opcional)" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn-primario-carrito">✅ Confirmar Orden</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 ChangarroWEB - Tienda Física & Instagram</p>
+        <p>Síguenos en nuestras redes sociales</p>
+    </footer>
 </body>
 </html>
