@@ -20,7 +20,7 @@ async function obtenerProductos() {
                         <p><strong>Categoría:</strong> ${producto.category}</p>
                         <p><strong>Precio:</strong> $${producto.price}</p>
                         <p><strong>Stock:</strong> ${producto.stock} unidades</p>
-                        <iframe src="${producto.ImageUrl}" width="100%" height="600px"></iframe>
+                        <img src="${producto.imageUrl}" alt="${producto.title}" style="width: 100%; max-width: 300px; border-radius: 8px;">
                     `;
                     contenedor.appendChild(div);
                 });
