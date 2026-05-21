@@ -858,3 +858,7 @@ footer p {
     }
 }
 
+/* Regla global para ocultar elementos de la interfaz */
+.hidden {
+    display: none !important;
+}

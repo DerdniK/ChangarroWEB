@@ -90,5 +90,16 @@
         <p>&copy; 2026 ChangarroWEB - Tienda Física & Instagram</p>
         <p>Síguenos en nuestras redes sociales</p>
     </footer>
+
+    <div id="modal-historial" class="modal-overlay">
+        <div class="modal-carrito-contenido" style="max-width: 800px;">
+            <button class="modal-cerrar" onclick="document.getElementById('modal-historial').classList.remove('active')">✕</button>
+            <h2>📦 Mi Historial de Pedidos</h2>
+            <div id="historial-lista" style="display: flex; flex-direction: column; gap: 15px;">
+                <p>Cargando historial...</p>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
