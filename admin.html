@@ -86,12 +86,12 @@
                             <label for="prod-type">Tipo:</label>
                             <select id="prod-type" required>
                                 <option value="">Selecciona tipo</option>
-                                <option value="poster">Poster</option>
-                                <option value="postal">Postal</option>
-                                <option value="mini-poster">Mini Poster</option>
-                                <option value="botón">Botón</option>
-                                <option value="sticker">Sticker</option>
-                                <option value="pin">Pin</option>
+                                <option value="Poster">Poster</option>
+                                <option value="Postal">Postal</option>
+                                <option value="Mini Poster">Mini Poster</option>
+                                <option value="Botón">Botón</option>
+                                <option value="Sticker">Sticker</option>
+                                <option value="Pin">Pin</option>
                             </select>
                         </div>
                     </div>
@@ -99,7 +99,18 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="prod-category">Categoría:</label>
-                            <input type="text" id="prod-category" placeholder="ej: anime, memes, arte" required>
+                            <select id="prod-category" required>
+                                <option value="">Selecciona categoría</option>
+                                <option value="Anime">Anime</option>
+                                <option value="Peliculas">Películas</option>
+                                <option value="Animalitos">Animalitos</option>
+                                <option value="Paisajes">Paisajes</option>
+                                <option value="Vehiculos">Vehículos</option>
+                                <option value="Series">Series</option>
+                                <option value="Caricaturas">Caricaturas</option>
+                                <option value="Musica">Música</option>
+                                <option value="Videojuegos">Videojuegos</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label for="prod-precio">Precio:</label>
@@ -112,15 +123,6 @@
                             <label for="prod-stock">Stock:</label>
                             <input type="number" id="prod-stock" min="0" required>
                         </div>
-                        <div class="form-group">
-                            <label for="prod-imagen">URL de Imagen:</label>
-                            <input type="url" id="prod-imagen" required>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="prod-descripcion">Descripción:</label>
-                        <textarea id="prod-descripcion" rows="3"></textarea>
                     </div>
 
                     <div class="form-acciones">

@@ -12,6 +12,7 @@ const tiposCatalogo = [
 let productosAgrupados = {};
 let filtroActual = null; // null = mostrar todas, o id de tipo específico
 let productoActualModal = null; // Producto abierto en modal
+const API_URL = 'https://3ulergkxc7.execute-api.us-east-1.amazonaws.com/default/api/v1';
 
 // Carrito de compras
 let carrito = JSON.parse(localStorage.getItem('carrito')) || [];
@@ -29,7 +30,7 @@ async function obtenerProductos() {
         contenedor.innerHTML = '<div class="loading"><div class="spinner"></div><p>Cargando catálogo...</p></div>';
 
         // Hacer petición a la API
-        const respuesta = await fetch('http://localhost:5253/api/v1/products');
+        const respuesta = await fetch(`${API_URL}/products`);
         
         if (!respuesta.ok) {
             throw new Error('No se pudo conectar con la API');
@@ -50,8 +51,15 @@ async function obtenerProductos() {
             return;
         }
 
+        // Asegurar que los precios sean números
+        const productosValidados = productos.map(p => ({
+            ...p,
+            price: parseFloat(p.price),
+            stock: parseInt(p.stock)
+        }));
+
         // Organizar productos por tipo y categoría
-        productosAgrupados = agruparProductosPorTipo(productos);
+        productosAgrupados = agruparProductosPorTipo(productosValidados);
         console.log("Productos agrupados:", productosAgrupados);
 
         // Crear botones de filtro
@@ -249,7 +257,8 @@ function crearProductoDiv(producto) {
     // Determinar estado de stock
     const stock = producto.stock || 0;
     const stockClass = stock > 0 ? 'stock-disponible' : 'sin-stock';
-    const stockTexto = stock > 0 ? `${stock} disponibles` : 'Agotado';
+    // AQUÍ CAMBIAMOS EL MENSAJE:
+    const stockTexto = stock > 0 ? `${stock} disponibles` : 'Agotado - Se fabrica bajo pedido';
 
     div.innerHTML = `
         <img src="${imagenUrl}" alt="${producto.title}" class="producto-imagen" onerror="this.src='https://via.placeholder.com/300?text=Error+Imagen'">
@@ -284,13 +293,14 @@ function abrirModal(producto) {
     const stock = producto.stock || 0;
     const stockDiv = document.getElementById('modal-stock');
     if (stock > 0) {
-        stockDiv.textContent = `📦 ${stock} unidades disponibles`;
+        stockDiv.textContent = `📦 ${stock} unidades listas para envío`;
         stockDiv.classList.remove('sin-stock');
-        document.getElementById('cantidad').max = stock;
+        document.getElementById('cantidad').max = stock; // Límite normal
     } else {
-        stockDiv.textContent = '❌ Agotado';
+        // AQUÍ CAMBIAMOS EL COMPORTAMIENTO:
+        stockDiv.textContent = '🛠️ Sin stock inmediato - ¡Haz tu pedido y lo fabricamos!';
         stockDiv.classList.add('sin-stock');
-        document.getElementById('cantidad').max = 0;
+        document.getElementById('cantidad').removeAttribute('max'); // Quitamos el límite para que puedan pedir
     }
     
     // Descripción
@@ -315,10 +325,6 @@ function cerrarModal() {
 
 function agregarAlCarrito() {
     if (!productoActualModal) return;
-    if (productoActualModal.stock <= 0) {
-        alert('❌ Este producto está agotado');
-        return;
-    }
     
     const cantidad = parseInt(document.getElementById('cantidad').value);
     if (cantidad <= 0) {
@@ -335,7 +341,7 @@ function agregarAlCarrito() {
         carrito.push({
             id: productoActualModal.id,
             title: productoActualModal.title,
-            price: productoActualModal.price,
+            price: parseFloat(productoActualModal.price),
             imageUrl: productoActualModal.imageUrl,
             cantidad: cantidad
         });
@@ -379,7 +385,8 @@ function mostrarCarrito() {
     
     let total = 0;
     container.innerHTML = carrito.map((item, index) => {
-        const subtotal = item.price * item.quantity;
+        const precio = parseFloat(item.price);
+        const subtotal = precio * parseInt(item.cantidad);
         total += subtotal;
         
         return `
@@ -387,9 +394,9 @@ function mostrarCarrito() {
                 <img src="${item.imageUrl}" alt="${item.title}" class="carrito-item-imagen">
                 <div class="carrito-item-info">
                     <h4 class="carrito-item-titulo">${item.title}</h4>
-                    <p class="carrito-item-precio">$${item.price.toFixed(2)}</p>
+                    <p class="carrito-item-precio">$${precio.toFixed(2)}</p>
                     <div class="carrito-item-controles">
-                        <input type="number" min="1" value="${item.quantity}" class="cantidad-input" onchange="actualizarCantidad(${index}, this.value)">
+                        <input type="number" min="1" value="${item.cantidad}" class="cantidad-input" onchange="actualizarCantidad(${index}, this.value)">
                         <button class="btn-eliminar-item" onclick="eliminarDelCarrito(${index})">🗑️ Eliminar</button>
                     </div>
                 </div>
@@ -424,7 +431,7 @@ function eliminarDelCarrito(index) {
     mostrarCarrito();
 }
 
-function procesarOrden(event) {
+async function procesarOrden(event) {
     event.preventDefault();
     
     if (carrito.length === 0) {
@@ -458,21 +465,41 @@ function procesarOrden(event) {
         estado: 'pendiente'
     };
     
-    // Guardar orden en localStorage
-    let ordenes = JSON.parse(localStorage.getItem('ordenes')) || [];
-    ordenes.push(orden);
-    localStorage.setItem('ordenes', JSON.stringify(ordenes));
-    
-    // Vaciar carrito
+    try {
+    // 1. Enviar la orden a DynamoDB mediante la API
+    const respuesta = await fetch(`${API_URL}/orders`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            id: orden.id.toString(), // Dynamo prefiere strings en los IDs a veces
+            cliente: orden.cliente,
+            email: orden.email,
+            telefono: orden.telefono,
+            fecha: orden.fecha,
+            total: orden.total,
+            completada: false,
+            productos: orden.productos
+        })
+    });
+
+    if (!respuesta.ok) throw new Error("Fallo al guardar en la nube");
+
+    // 2. Limpiar todo si fue exitoso
     carrito = [];
     localStorage.setItem('carrito', JSON.stringify(carrito));
     actualizarContadorCarrito();
     
-    alert(`✅ ¡Orden creada exitosamente!\n\nNúmero de orden: #${orden.id}\nTotal: $${total.toFixed(2)}\n\nNos pondremos en contacto pronto.`);
+    alert(`✅ ¡Orden creada exitosamente!\n\nNúmero de orden: #${orden.id}\nTotal: $${orden.total.toFixed(2)}\n\nNos pondremos en contacto pronto.`);
     
-    // Limpiar formulario y cerrar
     document.getElementById('formulario-orden').reset();
     cerrarCarrito();
+
+} catch(error) {
+    console.error(error);
+    alert('❌ Hubo un error al procesar tu orden. Intenta de nuevo.');
+}
 }
 
 // ==================== INICIALIZACIÓN ====================

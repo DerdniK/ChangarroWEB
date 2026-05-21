@@ -538,6 +538,33 @@
     font-size: 1.1em;
 }
 
+/* Botón completar orden */
+.btn-completar-orden {
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.9em;
+}
+
+.btn-completar-orden:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(76, 175, 80, 0.3);
+    background: linear-gradient(135deg, #45a049 0%, #3d8b40 100%);
+}
+
+.btn-completar-orden:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
 /* RESPONSIVE */
 @media (max-width: 768px) {
     .admin-header {

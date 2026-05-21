@@ -9,7 +9,7 @@ let sesionActiva = false;
 let productosActuales = [];
 let ordenesActuales = [];
 let productoEnEdicion = null;
-const API_URL = 'http://localhost:5253/api/v1';
+const API_URL = 'https://3ulergkxc7.execute-api.us-east-1.amazonaws.com/default/api/v1';
 
 // ==================== AUTENTICACIÓN ====================
 function iniciarSesion(event) {
@@ -172,13 +172,20 @@ async function cargarProductos() {
 
 async function cargarOrdenes() {
     try {
-        // Las órdenes se guardan en localStorage
-        const ordenesGuardadas = localStorage.getItem('ordenes') || '[]';
-        ordenesActuales = JSON.parse(ordenesGuardadas);
+        const respuesta = await fetch(`${API_URL}/orders`);
+        if (!respuesta.ok) throw new Error('Error al obtener órdenes de DynamoDB');
+        
+        ordenesActuales = await respuesta.json();
+        
+        // Ordenar de más recientes a más antiguas (opcional)
+        ordenesActuales.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+        
         mostrarListaOrdenes();
     } catch (error) {
         console.error('Error:', error);
         ordenesActuales = [];
+        document.getElementById('lista-ordenes').innerHTML = 
+            '<p class="sin-ordenes">⚠️ No se pudo conectar a la base de datos de órdenes.</p>';
     }
 }
 
@@ -218,32 +225,42 @@ async function guardarProducto(event) {
         type: document.getElementById('prod-type').value,
         category: document.getElementById('prod-category').value,
         price: parseFloat(document.getElementById('prod-precio').value),
-        stock: parseInt(document.getElementById('prod-stock').value),
-        imageUrl: document.getElementById('prod-imagen').value,
-        description: document.getElementById('prod-descripcion').value
+        stock: parseInt(document.getElementById('prod-stock').value)
     };
     
+    console.log('Enviando producto:', nuevoProducto);
+    
     try {
+        let url = `${API_URL}/products`;
+        let metodo = 'POST';
+        
         if (productoEnEdicion) {
-            // Editar producto existente
-            nuevoProducto.id = productoEnEdicion.id;
-            const respuesta = await fetch(`${API_URL}/products/${productoEnEdicion.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(nuevoProducto)
-            });
-            
-            if (!respuesta.ok) throw new Error('Error al actualizar');
+            url = `${API_URL}/products/${productoEnEdicion.id}`;
+            metodo = 'PUT';
+        }
+        
+        console.log(`${metodo} a:`, url);
+        
+        const respuesta = await fetch(url, {
+            method: metodo,
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(nuevoProducto)
+        });
+        
+        console.log('Respuesta status:', respuesta.status);
+        const textoRespuesta = await respuesta.text();
+        console.log('Respuesta body:', textoRespuesta);
+        
+        if (!respuesta.ok) {
+            throw new Error(`Error ${respuesta.status}: ${textoRespuesta}`);
+        }
+        
+        if (productoEnEdicion) {
             alert('✅ Producto actualizado exitosamente');
         } else {
-            // Crear nuevo producto
-            const respuesta = await fetch(`${API_URL}/products`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(nuevoProducto)
-            });
-            
-            if (!respuesta.ok) throw new Error('Error al crear');
             alert('✅ Producto creado exitosamente');
         }
         
@@ -251,6 +268,7 @@ async function guardarProducto(event) {
         await cargarProductos();
         actualizarDashboard();
     } catch (error) {
+        console.error('Error al guardar:', error);
         alert('❌ Error: ' + error.message);
     }
 }
@@ -264,8 +282,6 @@ async function editarProducto(producto) {
     document.getElementById('prod-category').value = producto.category;
     document.getElementById('prod-precio').value = producto.price;
     document.getElementById('prod-stock').value = producto.stock;
-    document.getElementById('prod-imagen').value = producto.imageUrl;
-    document.getElementById('prod-descripcion').value = producto.description || '';
     
     document.getElementById('formulario-producto').classList.remove('hidden');
 }
@@ -308,10 +324,13 @@ function mostrarListaProductos() {
             stockTexto = `${producto.stock} - ⚠️ Stock bajo`;
         }
         
+        // Mostrar placeholder si no hay imagen
+        const imagenUrl = producto.imageUrl || 'https://via.placeholder.com/300?text=Sin+Imagen';
+        
         return `
             <div class="producto-admin">
-                <img src="${producto.imageUrl}" alt="${producto.title}" class="producto-admin-imagen" 
-                     onerror="this.src='https://via.placeholder.com/300?text=Error'">
+                <img src="${imagenUrl}" alt="${producto.title}" class="producto-admin-imagen" 
+                     onerror="this.src='https://via.placeholder.com/300?text=Sin+Imagen'">
                 <div class="producto-admin-info">
                     <h4>${producto.title}</h4>
                     <p><strong>Tipo:</strong> ${producto.type}</p>
@@ -338,12 +357,16 @@ function mostrarListaOrdenes() {
     }
     
     container.innerHTML = ordenesActuales.map((orden, index) => {
+        const fechaCompletada = orden.fechaCompletada ? new Date(orden.fechaCompletada).toLocaleDateString() : null;
+        const botonCompletarDisabled = orden.completada ? 'disabled' : '';
+        const textoBoton = orden.completada ? '✓ Completada' : '✓ Marcar Completada';
+        
         return `
             <div class="orden-card">
                 <div class="orden-header">
                     <div class="orden-id">Orden #${orden.id}</div>
-                    <span class="orden-estado ${orden.estado ? 'estado-' + orden.estado : 'estado-pendiente'}">
-                        ${orden.estado ? orden.estado.toUpperCase() : 'PENDIENTE'}
+                    <span class="orden-estado ${orden.completada ? 'estado-completada' : 'estado-pendiente'}">
+                        ${orden.completada ? 'COMPLETADA' : 'PENDIENTE'}
                     </span>
                 </div>
                 
@@ -351,7 +374,8 @@ function mostrarListaOrdenes() {
                     <p><strong>Cliente:</strong> ${orden.cliente}</p>
                     <p><strong>Email:</strong> ${orden.email}</p>
                     <p><strong>Teléfono:</strong> ${orden.telefono}</p>
-                    <p><strong>Fecha:</strong> ${new Date(orden.fecha).toLocaleDateString()}</p>
+                    <p><strong>Fecha de Orden:</strong> ${new Date(orden.fecha).toLocaleDateString()}</p>
+                    ${fechaCompletada ? `<p><strong>Fecha Completada:</strong> ${fechaCompletada}</p>` : ''}
                 </div>
                 
                 <div class="orden-productos">
@@ -359,11 +383,13 @@ function mostrarListaOrdenes() {
                     ${orden.productos.map(prod => {
                         const productoEnBD = productosActuales.find(p => p.id === prod.id);
                         const stockDisponible = productoEnBD ? productoEnBD.stock : 'N/A';
+                        const stockColor = stockDisponible === 0 ? '#f44336' : '#999999';
+                        const stockTexto = stockDisponible === 0 ? 'Producto no disponible por el momento' : `Stock en BD: ${stockDisponible}`;
                         return `
                             <div class="orden-producto-item">
                                 <div class="orden-producto-nombre">
                                     ${prod.title}<br>
-                                    <small style="color: #999;">Stock en BD: ${stockDisponible}</small>
+                                    <small style="color: ${stockColor}; font-weight: 600;">${stockTexto}</small>
                                 </div>
                                 <div class="orden-producto-cantidad">x${prod.cantidad}</div>
                                 <div class="orden-producto-precio">$${(prod.precio * prod.cantidad).toFixed(2)}</div>
@@ -372,12 +398,81 @@ function mostrarListaOrdenes() {
                     }).join('')}
                 </div>
                 
-                <div style="text-align: right; font-size: 1.2em; font-weight: 700; color: #4caf50; margin-top: 15px; padding-top: 15px; border-top: 1px solid #333;">
-                    Total: $${orden.total.toFixed(2)}
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 15px; border-top: 1px solid #333;">
+                    <div style="text-align: left; font-size: 1.2em; font-weight: 700; color: #4caf50;">
+                        Total: $${orden.total.toFixed(2)}
+                    </div>
+                    ${!orden.completada ? `<button class="btn-completar-orden" onclick="completarOrden('${orden.id}')">✓ Marcar Completada</button>` : ''}
                 </div>
             </div>
         `;
     }).join('');
+}
+
+// ==================== COMPLETAR ORDEN ====================
+function completarOrden(ordenId) {
+    const ordenIndex = ordenesActuales.findIndex(o => o.id === ordenId);
+    if (ordenIndex === -1) return;
+    
+    const orden = ordenesActuales[ordenIndex];
+    
+    if (confirm(`¿Marcar orden #${orden.id} como completada?\n\nEsto restará el stock de los productos.`)) {
+        // Restar stock de cada producto
+        orden.productos.forEach(productoOrden => {
+            const productoIndex = productosActuales.findIndex(p => p.id === productoOrden.id);
+            if (productoIndex !== -1) {
+                productosActuales[productoIndex].stock -= productoOrden.cantidad;
+                console.log(`Stock actualizado: ${productosActuales[productoIndex].title} = ${productosActuales[productoIndex].stock}`);
+            }
+        });
+        
+        // Actualizar la orden como completada
+        orden.completada = true;
+        orden.fechaCompletada = new Date().toISOString();
+        
+        // BORRAR el localStorage.setItem('ordenes', ...);
+        
+        // ¡NUEVO! Actualizar la orden en la nube (DynamoDB)
+        fetch(`${API_URL}/orders/${orden.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(orden)
+        }).catch(err => console.error("Error al actualizar orden en la nube:", err));
+        
+        // Actualizar productos en la API (esto ya lo tenías)
+        actualizarStockEnAPI();
+        
+        alert('✅ Orden completada y stock actualizado');
+        mostrarListaOrdenes();
+        actualizarDashboard();
+    }
+}
+
+// Actualizar stock en la API
+async function actualizarStockEnAPI() {
+    try {
+        for (const producto of productosActuales) {
+            await fetch(`${API_URL}/products/${producto.id}`, {
+                method: 'PUT',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    id: producto.id, // <-- Agregar
+                    title: producto.title,
+                    type: producto.type,
+                    category: producto.category,
+                    price: producto.price,
+                    stock: producto.stock,
+                    imageUrl: producto.imageUrl // <-- ¡Súper crítico para no perder las fotos!
+                })
+            });
+        }
+        console.log('✓ Stock actualizado en la API');
+    } catch (error) {
+        console.error('Error al actualizar stock en API:', error);
+    }
 }
 
 // ==================== INICIALIZACIÓN ====================
