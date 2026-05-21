@@ -1,3 +1,43 @@
+// Validar sesión al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    verificarSesion();
+    actualizarContadorCarrito();
+});
+
+function verificarSesion() {
+    const sessionStr = localStorage.getItem('sessionUser');
+    const headerAcciones = document.getElementById('header-acciones');
+
+    // Si por alguna razón no encuentra el contenedor, detenemos la función para evitar errores
+    if (!headerAcciones) return; 
+
+    if (sessionStr) {
+        const usuario = JSON.parse(sessionStr);
+        let htmlBotones = `
+            <span style="color: #f4a230; font-weight: bold; font-size: 1.2em; margin-right: 15px;">👋 Hola, ${usuario.nombre}</span>
+            <button class="btn-carrito" onclick="abrirCarrito()">🛒 Carrito (<span id="contador-carrito">0</span>)</button>
+        `;
+
+        if (usuario.esAdmin) {
+            htmlBotones += `<a href="admin.html" class="btn-admin" style="margin-left: 10px;">⚙️ Panel Admin</a>`;
+        }
+
+        htmlBotones += `<button onclick="cerrarSesionGlobal()" style="padding: 12px 25px; margin-left: 10px; background-color: #f44336; color: white; border: none; border-radius: 50px; font-weight: 600; cursor: pointer;">Cerrar Sesión</button>`;
+
+        headerAcciones.innerHTML = htmlBotones;
+    } else {
+        headerAcciones.innerHTML = `
+            <button class="btn-carrito" onclick="abrirCarrito()">🛒 Carrito (<span id="contador-carrito">0</span>)</button>
+            <a href="admin.html" class="btn-admin" style="margin-left: 10px;">🔐 Iniciar Sesión</a>
+        `;
+    }
+}
+
+function cerrarSesionGlobal() {
+    localStorage.removeItem('sessionUser');
+    window.location.reload(); 
+}
+
 // Mapeo de tipos para organizar los productos
 const tiposCatalogo = [
     { id: 'poster', nombre: '📄 Posters', icon: '📄' },
@@ -439,7 +479,8 @@ async function procesarOrden(event) {
         return;
     }
     
-    const nombre = document.getElementById('cliente-nombre').value;
+    const sessionStr = localStorage.getItem('sessionUser');
+    const nombreCliente = sessionStr ? JSON.parse(sessionStr).nombre : document.getElementById('cliente-nombre').value;
     const email = document.getElementById('cliente-email').value;
     const telefono = document.getElementById('cliente-telefono').value;
     const direccion = document.getElementById('cliente-direccion').value;

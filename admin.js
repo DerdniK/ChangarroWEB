@@ -12,54 +12,82 @@ let productoEnEdicion = null;
 const API_URL = 'https://3ulergkxc7.execute-api.us-east-1.amazonaws.com/default/api/v1';
 
 // ==================== AUTENTICACIÓN ====================
-function iniciarSesion(event) {
+async function iniciarSesion(event) {
     event.preventDefault();
-    console.log('Iniciando sesión...');
     
-    const usuarioInput = document.getElementById('usuario');
-    const contraseñaInput = document.getElementById('contraseña');
+    const usuarioInput = document.getElementById('usuario').value.trim();
+    const contraseñaInput = document.getElementById('contraseña').value;
     
-    if (!usuarioInput || !contraseñaInput) {
-        alert('❌ Error: Elementos del formulario no encontrados');
-        return false;
-    }
-    
-    const usuario = usuarioInput.value.trim();
-    const contraseña = contraseñaInput.value;
-    
-    console.log('Usuario ingresado:', usuario);
-    console.log('Credenciales esperadas:', CREDENCIALES_DEFAULT.usuario);
-    
-    if (usuario === CREDENCIALES_DEFAULT.usuario && 
-        contraseña === CREDENCIALES_DEFAULT.contraseña) {
-        console.log('✓ Credenciales correctas');
-        sesionActiva = true;
-        localStorage.setItem('sessionAdmin', JSON.stringify({ usuario, timestamp: Date.now() }));
-        
-        const loginContainer = document.getElementById('login-container');
-        const adminContainer = document.getElementById('admin-container');
-        
-        if (loginContainer) {
-            loginContainer.style.display = 'none';
-            console.log('✓ Login ocultado');
+    try {
+        const respuesta = await fetch(`${API_URL}/usuarios/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ usuario: usuarioInput, password: contraseñaInput })
+        });
+
+        if (!respuesta.ok) {
+            alert('❌ Usuario o contraseña incorrectos');
+            return false;
         }
-        if (adminContainer) {
-            adminContainer.style.display = 'block';
-            console.log('✓ Admin mostrado');
-        }
-        
-        console.log('Cargando datos...');
-        setTimeout(() => {
+
+        const datosUsuario = await respuesta.json();
+
+        // Guardamos la sesión en el navegador
+        localStorage.setItem('sessionUser', JSON.stringify(datosUsuario));
+
+        if (datosUsuario.esAdmin === true) {
+            // Si es admin, mostramos el panel de control aquí mismo
+            document.getElementById('login-container').style.display = 'none';
+            document.getElementById('admin-container').style.display = 'block';
             cargarDatos();
             mostrarSeccion('dashboard');
-        }, 100);
-        
-        console.log('✓ Sesión iniciada exitosamente');
-    } else {
-        console.log('✗ Credenciales incorrectas');
-        alert('❌ Usuario o contraseña incorrectos\n\nUsuario: admin\nContraseña: admin123');
+        } else {
+            // Si es cliente, lo mandamos a la página principal
+            window.location.href = 'index.html'; 
+        }
+    } catch (error) {
+        alert('❌ Error al conectar con el servidor.');
     }
+    return false;
+}
+
+async function registrarUsuario(event) {
+    event.preventDefault();
     
+    const nombre = document.getElementById('reg-nombre').value.trim();
+    const usuario = document.getElementById('reg-usuario').value.trim();
+    const contraseña = document.getElementById('reg-contraseña').value;
+    
+    try {
+        const respuesta = await fetch(`${API_URL}/usuarios/registro`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: usuario,
+                password: contraseña,
+                nombre: nombre,
+                esAdmin: false // Por defecto son clientes
+            })
+        });
+
+        if (!respuesta.ok) {
+            alert(`❌ El usuario ya existe o hubo un error.`);
+            return false;
+        }
+
+        // Si se registra con éxito, iniciamos sesión automáticamente
+        localStorage.setItem('sessionUser', JSON.stringify({
+            usuario: usuario,
+            nombre: nombre,
+            esAdmin: false
+        }));
+        
+        alert('✅ ¡Cuenta creada con éxito! Te llevaremos al catálogo.');
+        window.location.href = 'index.html'; // Mandar a inicio
+
+    } catch (error) {
+        alert('❌ Error al conectar con el servidor.');
+    }
     return false;
 }
 
@@ -83,6 +111,47 @@ function cerrarSesion() {
         
         console.log('✓ Sesión cerrada');
     }
+}
+
+async function registrarUsuario(event) {
+    event.preventDefault();
+    console.log('Enviando datos de registro a la nube...');
+    
+    const nombre = document.getElementById('reg-nombre').value.trim();
+    const usuario = document.getElementById('reg-usuario').value.trim();
+    const contraseña = document.getElementById('reg-contraseña').value;
+    
+    try {
+        const respuesta = await fetch(`${API_URL}/usuarios/registro`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: usuario,  // Asegúrate de que coincida con la propiedad en C#
+                password: contraseña,
+                nombre: nombre,
+                esAdmin: false      // ¡Seguridad primero! Todos nacen siendo clientes normales
+            })
+        });
+
+        if (!respuesta.ok) {
+            const errorData = await respuesta.json();
+            alert(`❌ No se pudo crear la cuenta: ${errorData.mensaje || 'Intenta de nuevo'}`);
+            return false;
+        }
+
+        alert('✅ ¡Cuenta creada con éxito! Ahora puedes iniciar sesión en la parte de arriba.');
+        
+        // Limpiamos los campos
+        document.getElementById('reg-nombre').value = '';
+        document.getElementById('reg-usuario').value = '';
+        document.getElementById('reg-contraseña').value = '';
+
+    } catch (error) {
+        console.error('Error al registrar:', error);
+        alert('❌ Error al conectar con el servidor de AWS.');
+    }
+    
+    return false;
 }
 
 // ==================== NAVEGACIÓN ====================

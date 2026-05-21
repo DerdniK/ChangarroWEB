@@ -12,21 +12,47 @@
     <!-- LOGIN -->
     <div id="login-container" class="login-container active">
         <div class="login-box">
-            <h1>🔐 ChangarroWEB Admin</h1>
-            <p>Acceso Restringido - Solo Vendedores</p>
-            
-            <form onsubmit="iniciarSesion(event)">
-                <div class="form-group">
-                    <label for="usuario">Usuario:</label>
-                    <input type="text" id="usuario" placeholder="admin" required>
+            <div class="login-flex">
+                
+                <div class="login-column">
+                    <h1>🔐 INICIAR SESIÓN</h1>
+                    <p>Bienvenido al ChangarroWEB</p>
+                    <form onsubmit="iniciarSesion(event)">
+                        <div class="form-group">
+                            <label for="usuario">Usuario:</label>
+                            <input type="text" id="usuario" placeholder="juanperez123" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="contraseña">Contraseña:</label>
+                            <input type="password" id="contraseña" placeholder="••••••••" required>
+                        </div>
+                        <button type="submit" class="btn-login">Iniciar Sesión</button>
+                    </form>
                 </div>
-                <div class="form-group">
-                    <label for="contraseña">Contraseña:</label>
-                    <input type="password" id="contraseña" placeholder="••••••••" required>
+
+                <div class="login-divider"></div>
+
+                <div class="login-column">
+                    <h1 style="color: #f4a230; text-align: center; font-size: 2em; margin-bottom: 10px;">✨ REGISTRARSE</h1>
+                    <p style="text-align: center; color: #cccccc; margin-bottom: 25px;">¿Eres nuevo cliente?</p>
+                    <form onsubmit="registrarUsuario(event)">
+                        <div class="form-group">
+                            <label for="reg-nombre">Nombre Completo:</label>
+                            <input type="text" id="reg-nombre" placeholder="Ej. Juan Pérez" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="reg-usuario">Nombre de Usuario:</label>
+                            <input type="text" id="reg-usuario" placeholder="juanperez123" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="reg-contraseña">Contraseña:</label>
+                            <input type="password" id="reg-contraseña" placeholder="••••••••" required>
+                        </div>
+                        <button type="submit" class="btn-login" style="background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color: white;">Crear Cuenta</button>
+                    </form>
                 </div>
-                <button type="submit" class="btn-login">Iniciar Sesión</button>
-            </form>
-            <p class="login-info">Usuario: <strong>admin</strong> | Contraseña: <strong>admin123</strong></p>
+
+            </div>
         </div>
     </div>
 
